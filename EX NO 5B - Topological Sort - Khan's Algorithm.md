@@ -1,41 +1,49 @@
 
 
-# EX 5C Graph coloring
-## DATE:23/10/25
+# EX 5B Topological Sort - Khan's Algorithm
+## DATE:16/10/25
 ## AIM:
 To write a Java program to for given constraints.
 Problem Description:
-In a hilly region, several radio towers are installed to provide communication services. However, due to signal interference, two adjacent towers (i.e., in communication range of each other) must not use the same frequency channel.
+A software development team is preparing for a product release. The release consists of multiple tasks, each dependent on other tasks being completed first. You are to determine a valid order in which all tasks can be completed. If it's not possible due to cyclic dependencies, output that the release cannot be scheduled.
 
-You are given N radio towers and their communication ranges represented as an undirected graph. Your task is to assign channels (colors) to these towers using at most M channels such that no two adjacent towers use the same channel.
+Each task is labeled from 0 to n-1. The dependencies are provided in the form of pairs [a, b] which means task a depends on task b.
 
-Write a program to determine if such an assignment is possible or not.
+Implement a program to find a valid task execution order using topological sort.
 
 Input Format:
-First line contains two integers: N (number of towers), and M (number of available frequency channels).
 
-Next line contains an integer E — number of edges representing the communication range.
+An integer n — number of tasks.
 
-Next E lines contain two integers u and v — representing that tower u and tower v are within range (0-based index).
+An integer m — number of dependencies.
+
+m lines follow with two integers a and b — representing a depends on b.
 
 Output Format:
-Print "YES" if it's possible to assign frequencies to towers such that no two adjacent towers have the same frequency.
 
-Otherwise, print "NO".
+If a valid order exists, print the task numbers in a possible execution order (space-separated).
 
-<img width="182" height="440" alt="image" src="https://github.com/user-attachments/assets/b32078a2-c79d-4a25-88c4-e51144b5456f" />
+If not, print "Release cannot be scheduled".
 
+<img width="341" height="363" alt="image" src="https://github.com/user-attachments/assets/f0355541-4f66-49da-bcd3-171a799a7c1f" />
 
 ## Algorithm
-1. Start and read the number of nodes n, available colors m, and edges e.
+1. Start and read the number of tasks n and dependency pairs.
 
-2.Construct an adjacency list to represent the graph connections.
+2.Build a directed graph using an adjacency list and compute the indegree of each node.
 
-3.Assign colors to each node one by one using recursion.
+3.Add all nodes with indegree = 0 (no dependencies) to a queue.
 
-4.Before coloring a node, check if assigning the current color is safe (no adjacent node has the same color).
+4.While the queue is not empty:
 
-5.If all nodes can be safely colored, print “YES”; otherwise, print “NO.”  
+Remove a task, add it to the task order.
+
+Decrease the indegree of its dependent tasks; if any reaches 0, add it to the queue.
+
+5.Check completion:
+
+If all tasks are processed, print the task order; otherwise, print “Release cannot be scheduled.”
+
 
 ## Program:
 ```
@@ -46,55 +54,58 @@ Register Number:  212223100013
 */
 import java.util.*;
 
-public class prog {
+public class prog{
 
-    public static boolean isColorable(List<List<Integer>> graph, int[] color, int node, int m, int n) {
-        if (node == n) return true;
+    public static List<Integer> findTaskOrder(int n, int[][] dependencies) {
+        List<Integer> order = new ArrayList<>();
+        List<List<Integer>> graph = new ArrayList<>();
+        int[] indegree = new int[n];
 
-        for (int c = 1; c <= m; c++) {
-            if (isSafe(graph, color, node, c)) {
-                color[node] = c;
-                if (isColorable(graph, color, node + 1, m, n))
-                    return true;
-                color[node] = 0;
+        for (int i = 0; i < n; i++) graph.add(new ArrayList<>());
+
+        for (int[] dep : dependencies) {
+            graph.get(dep[1]).add(dep[0]);
+            indegree[dep[0]]++;
+        }
+
+        Queue<Integer> q = new LinkedList<>();
+        for (int i = 0; i < n; i++) {
+            if (indegree[i] == 0) q.offer(i);
+        }
+
+        while (!q.isEmpty()) {
+            int curr = q.poll();
+            order.add(curr);
+            for (int neighbor : graph.get(curr)) {
+                indegree[neighbor]--;
+                if (indegree[neighbor] == 0) q.offer(neighbor);
             }
         }
-        return false;
-    }
 
-    public static boolean isSafe(List<List<Integer>> graph, int[] color, int node, int c) {
-        for (int neighbor : graph.get(node)) {
-            if (color[neighbor] == c)
-                return false;
-        }
-        return true;
+        if (order.size() != n) return null;
+        return order;
     }
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int n = sc.nextInt(); // number of towers
-        int m = sc.nextInt(); // number of channels
-        int e = sc.nextInt(); // number of connections
+        int n = sc.nextInt(); // number of tasks
+        int m = sc.nextInt(); // number of dependencies
 
-        List<List<Integer>> graph = new ArrayList<>();
-        for (int i = 0; i < n; i++)
-            graph.add(new ArrayList<>());
-
-        for (int i = 0; i < e; i++) {
-            int u = sc.nextInt();
-            int v = sc.nextInt();
-            graph.get(u).add(v);
-            graph.get(v).add(u);
+        int[][] dependencies = new int[m][2];
+        for (int i = 0; i < m; i++) {
+            dependencies[i][0] = sc.nextInt(); // a
+            dependencies[i][1] = sc.nextInt(); // b
         }
 
-        int[] color = new int[n];
+        List<Integer> result = findTaskOrder(n, dependencies);
 
-        if (isColorable(graph, color, 0, m, n))
-            System.out.println("YES");
-        else
-            System.out.println("NO");
-
-        sc.close();
+        if (result == null) {
+            System.out.println("Release cannot be scheduled");
+        } else {
+            for (int task : result) {
+                System.out.print(task + " ");
+            }
+        }
     }
 }
 
@@ -102,7 +113,7 @@ public class prog {
 
 ## Output:
 
-<img width="328" height="480" alt="image" src="https://github.com/user-attachments/assets/16b8b54d-cd45-4f2b-83d4-7404b3880ae2" />
+<img width="685" height="505" alt="image" src="https://github.com/user-attachments/assets/46d10218-1c7c-4711-a8e5-f04a077ca40d" />
 
 
 ## Result:
